@@ -16,7 +16,7 @@ abstract class Target
 case class Person( nickname  : Option[String]
                  , username  : Option[String]
                  , host      : Option[Remote] 
-                 , server    : Option[Remote]) extends Target with Source
+                 , server    : Option[Remote] ) extends Target with Source
 case class Channel( name     : String
                   , suffix   : Option[String] ) extends Target
 
@@ -35,36 +35,36 @@ abstract class BaseParser extends Parsers {
     protected def host = hostaddr | hostname
     
     protected def hostname = {
-    	val shortname = (letter | number) ~ rep(letter | number | '-') ~ rep(letter | number) ^^
-    		{ case c ~ as ~ bs =>  (c :: as ++ bs) mkString }
-    	
-    	val d_shortname = '.' ~ shortname ^^ { case _ ~ sn => "." ++ sn }
-    	
-    	shortname ~ rep(d_shortname)  ^^ 
-    		{ case sn ~ rest => DomainName(sn ++ (rest mkString)) }
+        val shortname = (letter | number) ~ rep(letter | number | '-') ~ rep(letter | number) ^^
+            { case c ~ as ~ bs =>  (c :: as ++ bs) mkString }
+        
+        val d_shortname = '.' ~ shortname ^^ { case _ ~ sn => "." ++ sn }
+        
+        shortname ~ rep(d_shortname)  ^^ 
+            { case sn ~ rest => DomainName(sn ++ (rest mkString)) }
     }
     
     protected def hostaddr = {
-    	val d_number = '.' ~ rep1(number) ^^ 
-    		{ case _ ~ n => "." ++ n }
-    	val ip4addr  = rep1(number) ~ rep1(d_number) ^^ 
-    		{ case s ~ ss => (s ++ ss) mkString }
-    	
-    	val hexdigit = number | oneOf("aAbBcCdDeEfF")
-    	val c_hexdigit = ':' ~ rep1(hexdigit) ^^ 
-    		{ case _ ~ d => ":" ++ d}
-    	
-    	val ip6addr_plain  = rep1(hexdigit) ~ rep1(c_hexdigit) ^^
-    		{ case d ~ ds => (d ++ ds) mkString }
-    	val ip6addr_ip4    = acceptSeq("0:0:0:0:0:") ~ (acceptSeq("0") | acceptSeq("FFFF")) ~ ':' ~ ip4addr ^^
-    		{ case a ~ b ~ _ ~ d =>  ((a ++ b) mkString) ++ ":" ++ (d mkString)}
-    	
-    	val ip6addr        = ip6addr_ip4 ||| ip6addr_plain
-    	
-    	ip4addr ^^ 
-    		{ s => IP4Addr(s) } |
-    	ip6addr ^^
-    		{ s => IP6Addr(s) }
+        val d_number = '.' ~ rep1(number) ^^ 
+            { case _ ~ n => "." ++ n }
+        val ip4addr  = rep1(number) ~ rep1(d_number) ^^ 
+            { case s ~ ss => (s ++ ss) mkString }
+        
+        val hexdigit = number | oneOf("aAbBcCdDeEfF")
+        val c_hexdigit = ':' ~ rep1(hexdigit) ^^ 
+            { case _ ~ d => ":" ++ d}
+        
+        val ip6addr_plain  = rep1(hexdigit) ~ rep1(c_hexdigit) ^^
+            { case d ~ ds => (d ++ ds) mkString }
+        val ip6addr_ip4    = acceptSeq("0:0:0:0:0:") ~ (acceptSeq("0") | acceptSeq("FFFF")) ~ ':' ~ ip4addr ^^
+            { case a ~ b ~ _ ~ d =>  ((a ++ b) mkString) ++ ":" ++ (d mkString)}
+        
+        val ip6addr        = ip6addr_ip4 ||| ip6addr_plain
+        
+        ip4addr ^^ 
+            { s => IP4Addr(s) } |
+        ip6addr ^^
+            { s => IP6Addr(s) }
     }
     
     protected def user     = rep1(allExcept(" \0\r\n@%!")) ^^ {_ mkString}
@@ -115,7 +115,7 @@ object MessageParser extends BaseParser {
 
         servername ||| nick ~ opt(e_user) ~ opt(a_host)  ^^
             { case nick ~ oUser ~ oHost => 
-            	Person(Some(nick), oUser, oHost, None) 
+                Person(Some(nick), oUser, oHost, None) 
             }
     }
 
@@ -162,10 +162,10 @@ object TargetParser extends BaseParser {
 
     private def to : Parser[Target] = {
         val p_host = '%' ~ host ^^ 
-         	{ case _ ~ h => h }
+             { case _ ~ h => h }
 
         val a_servername = '@' ~ servername ^^ 
-        	{ case _ ~ sn => sn} 
+            { case _ ~ sn => sn} 
 
         val e_user_a_host = '!' ~ user ~ '@' ~ host ^^ 
             { case _ ~ u ~ _ ~ h => (u, h) }
