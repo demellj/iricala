@@ -7,23 +7,20 @@ case class DomainName(name : String) extends Remote
 case class IP4Addr(addr : String)    extends Remote
 case class IP6Addr(addr : String)    extends Remote
 
-
-case class Param(args : List[String], trailing : Option[String])
-case class Message(from : Option[Source], command : String, param : Param)
-
+case class Message( from     : Option[Source]
+                  , command  : String
+                  , args     : List[String]
+                  , trailing : Option[String] )
 
 abstract class Target
-case class Nickname( name : String
-                   , user : Option[String]
-                   , host : Option[Remote] ) extends Target with Source
-case class Username( user : String
-                   , host : Option[Remote]
-                   , servername : Option[Remote] ) extends Target
-case class Channel( prefix : Char
-                  , name   : String
-                  , suffix : Option[String] ) extends Target
+case class Person( nickname  : Option[String]
+                 , username  : Option[String]
+                 , host      : Option[Remote] 
+                 , server    : Option[Remote]) extends Target with Source
+case class Channel( name     : String
+                  , suffix   : Option[String] ) extends Target
 
-                  
+
 abstract class BaseParser extends Parsers {
     type Elem = Char
 
@@ -35,7 +32,7 @@ abstract class BaseParser extends Parsers {
 
     protected def servername = host
 
-    protected def host     = hostname | hostaddr
+    protected def host = hostname | hostaddr
     
     protected def hostname = {
     	val shortname = (letter | number) ~ rep(letter | number | '-') ~ rep(letter | number) ^^
@@ -48,11 +45,14 @@ abstract class BaseParser extends Parsers {
     }
     
     protected def hostaddr = {
-    	val d_number = '.' ~ rep1(number) ^^ { case _ ~ n => "." ++ n }
-    	val ip4addr  = rep1(number) ~ rep1(d_number) ^^ { case s ~ ss => (s ++ ss) mkString }
+    	val d_number = '.' ~ rep1(number) ^^ 
+    		{ case _ ~ n => "." ++ n }
+    	val ip4addr  = rep1(number) ~ rep1(d_number) ^^ 
+    		{ case s ~ ss => (s ++ ss) mkString }
     	
     	val hexdigit = number | oneOf("aAbBcCdDeEfF")
-    	val c_hexdigit = ':' ~ rep1(hexdigit) ^^ { case _ ~ d => ":" ++ d}
+    	val c_hexdigit = ':' ~ rep1(hexdigit) ^^ 
+    		{ case _ ~ d => ":" ++ d}
     	
     	val ip6addr_plain  = rep1(hexdigit) ~ rep1(c_hexdigit) ^^
     		{ case d ~ ds => (d ++ ds) mkString }
@@ -78,17 +78,17 @@ abstract class BaseParser extends Parsers {
             }
     }
 
-    protected def space    = rep1(' ') ^^ {_ mkString}
+    protected def space = rep1(' ') ^^ {_ mkString}
 
-    protected def number   = oneOf("0123456789")
+    protected def number = oneOf("0123456789")
 
     protected def uppercase = oneOf("ABCDEFGHIJKLMNOPQRSTUVWXYZ")
 
     protected def lowercase = oneOf("abcdefghijklmnopqrstuwxyz")
 
-    protected def letter   = uppercase | lowercase
+    protected def letter = uppercase | lowercase
 
-    protected def crlf     = acceptSeq("\r\n")
+    protected def crlf = acceptSeq("\r\n")
 
     type ResultType
 
@@ -102,11 +102,11 @@ abstract class BaseParser extends Parsers {
 }
 
 object MessageParser extends BaseParser {
-    private def message  = {
+    private def message = {
         val c_prefix_s = ':' ~ prefix ~ space ^^ { case _ ~ p ~ _ => p }
 
         opt(c_prefix_s) ~ command ~ params ~ crlf  ^^
-            { case oPrfx ~ cmds ~ prms ~ _ => Message(oPrfx, cmds, prms) }
+            { case oPrfx ~ cmds ~ ((ls, otr)) ~ _ => Message(oPrfx, cmds, ls, otr) }
     }
 
     private def prefix : Parser[Source]  = {
@@ -115,11 +115,11 @@ object MessageParser extends BaseParser {
 
         servername ||| nick ~ opt(e_user) ~ opt(a_host)  ^^
             { case nick ~ oUser ~ oHost => 
-            	Nickname(nick, oUser, oHost) 
+            	Person(Some(nick), oUser, oHost, None) 
             }
     }
 
-    private def command  =
+    private def command =
         rep1(letter) ^^ 
             { _ mkString
             } |
@@ -128,16 +128,16 @@ object MessageParser extends BaseParser {
                 (a :: b :: c :: Nil) mkString 
             }
 
-    private def params : Parser[Param] = {
+    private def params : Parser[(List[String],Option[String])] = {
         val cln_trailing = 
-            cln ~ trailing  ^^ { case _ ~ t => Param(Nil, Some(t)) }
+            ':' ~ trailing  ^^ { case _ ~ t => (Nil, Some(t)) }
 
         val middle_params = 
-            middle ~ params ^^ { case p ~ Param(ps, t) => Param(p :: ps, t)}
+            middle ~ params ^^ { case p ~ ((ps, t)) => (p :: ps, t)}
 
         opt(space) ~ opt(cln_trailing | middle_params)  ^^ 
             { case _ ~ rest => 
-                rest getOrElse Param(Nil, None)
+                rest getOrElse (Nil, None)
             }
     }
 
@@ -147,13 +147,6 @@ object MessageParser extends BaseParser {
         }
 
     private def trailing = rep(allExcept("\r\n\0")) ^^ {_ mkString}
-
-    // This needs to be fixed its not precise
-    private def cln      = ':'
-
-    private def usrDelim = '!'
-
-    private def hstDelim = '@'
     
     type ResultType = Message
 
@@ -167,39 +160,41 @@ object TargetParser extends BaseParser {
         to ~ rep(sep_to) ^^ { case r ~ rs => r :: rs }
     }
 
-    private def to = {
-        val p_host = '%' ~ host ^^ { case _ ~ h => h }
+    private def to : Parser[Target] = {
+        val p_host = '%' ~ host ^^ 
+         	{ case _ ~ h => h }
 
-        val a_servername = '@' ~ servername ^^ { case _ ~ sn => sn} 
+        val a_servername = '@' ~ servername ^^ 
+        	{ case _ ~ sn => sn} 
 
         val e_user_a_host = '!' ~ user ~ '@' ~ host ^^ 
             { case _ ~ u ~ _ ~ h => (u, h) }
 
         val user_server = user ~ opt(p_host) ~ a_servername ^^
-            { case u ~ oh ~ sn => Username(u, oh, Some(sn)) }
+            { case u ~ oh ~ sn => Person(None, Some(u), oh, Some(sn)) }
 
         val user_host = user ~ p_host  ^^
-            { case u ~ h => Username(u, Some(h), None) }
+            { case u ~ h => Person(None, Some(u), Some(h), None) }
 
         val nick_optqualuser = nick ~ opt(e_user_a_host)  ^^
             { case n ~ opt => opt match {
-                case Some((u,h)) => Nickname(n, Some(u), Some(h))
-                case None        => Nickname(n, None, None)
+                case Some((u,h)) => Person(Some(n), Some(u), Some(h), None)
+                case None        => Person(Some(n), None, None, None)
             }}
 
         channel | targetmask | (nick_optqualuser ||| user_server ||| user_host)
     }
 
-    private def targetmask = failure("fail") ^^ {_ => Channel('a', "foo", None) }
+    private def targetmask = failure("fail") ^^ {_ => Channel("a" ++ "foo", None) }
 
-    private def channelid  = uppercase | number 
+    private def channelid = uppercase | number 
 
     private def channel = {
         val e_channelid = '!' ~ channelid ^^ { case _ ~ cid => cid }
         val c_chstring  = ':' ~ chstring  ^^ { case _ ~ cs  => cs  }
 
         (oneOf("#+&") | e_channelid) ~ chstring ~ opt(c_chstring)  ^^
-            { case a ~ b ~ c => Channel(a, b, c) }
+            { case a ~ b ~ c => Channel(a.toString ++ b, c) }
     }
 
     private def chstring = rep1(allExcept(" \f\0\r\n,:")) ^^ {_ mkString}
