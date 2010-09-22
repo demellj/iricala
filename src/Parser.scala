@@ -32,7 +32,7 @@ abstract class BaseParser extends Parsers {
 
     protected def servername = host
 
-    protected def host = hostname | hostaddr
+    protected def host = hostaddr | hostname
     
     protected def hostname = {
     	val shortname = (letter | number) ~ rep(letter | number | '-') ~ rep(letter | number) ^^
