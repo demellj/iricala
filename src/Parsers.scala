@@ -1,26 +1,5 @@
 import scala.util.parsing.combinator.Parsers
 
-trait Source
-
-abstract class Remote extends Source
-case class DomainName(name : String) extends Remote
-case class IP4Addr(addr : String)    extends Remote
-case class IP6Addr(addr : String)    extends Remote
-
-case class Message( from     : Option[Source]
-                  , command  : String
-                  , args     : List[String]
-                  , trailing : Option[String] )
-
-abstract class Target
-case class Person( nickname  : Option[String]
-                 , username  : Option[String]
-                 , host      : Option[Remote] 
-                 , server    : Option[Remote] ) extends Target with Source
-case class Channel( name     : String
-                  , suffix   : Option[String] ) extends Target
-
-
 abstract class BaseParser extends Parsers {
     type Elem = Char
 
