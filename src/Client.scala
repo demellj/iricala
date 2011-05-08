@@ -21,7 +21,7 @@ class Client(private var _userName : String,
     def userMode = thisClient.userMode
     def realName = thisClient.realName
     def nickName = thisClient.nickName
-    def userName = thisClient.userMode
+    def userName = thisClient.userName
 
     def send(cmd: String, args: List[String], trailing: Option[String]) = thisClient.send(cmd, args, trailing)
   }
