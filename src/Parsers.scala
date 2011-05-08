@@ -63,7 +63,7 @@ abstract class BaseParser extends Parsers {
 
     protected def uppercase = oneOf("ABCDEFGHIJKLMNOPQRSTUVWXYZ")
 
-    protected def lowercase = oneOf("abcdefghijklmnopqrstuwxyz")
+    protected def lowercase = oneOf("abcdefghijklmnopqrstuvwxyz")
 
     protected def letter = uppercase | lowercase
 
