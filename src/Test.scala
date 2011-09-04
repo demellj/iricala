@@ -11,7 +11,7 @@ object Test {
 
       client += {msg : Message => Console println msg}
 
-      client connect "localhost"
+      client connect "irc.freenode.net"
       
       //Console println (MessageParser.parseString(":my.server.name 001 test :Welcome to the Internet Relay Network test\r\n"))
     }

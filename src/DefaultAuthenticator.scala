@@ -1,4 +1,8 @@
-trait Authenticator extends UserInfo with Core { thisAuth =>
+trait DefaultAuthenticator 
+	extends UserInfo with Dispatchable
+	                  with Responsive
+	                  with Authenticatable
+{ thisAuth =>
   private var needsAuth : Boolean = true;
 
   private var _userName : String = "user"
@@ -12,8 +16,9 @@ trait Authenticator extends UserInfo with Core { thisAuth =>
         thisAuth.send("REGISTER");
         thisAuth.send("USER", List(userName, userMode, "*"), Some(realName));
         thisAuth.send("NICK", List(nickName));
+        needsAuth = false
+        onAuthenticated
       }
-      needsAuth = false
       case _ => ()
     }
   };
@@ -22,15 +27,15 @@ trait Authenticator extends UserInfo with Core { thisAuth =>
     thisAuth += authenticationHandler;
   }
 
-  def userName = _userName;
-  def userName_(un : String) = _userName = un;
+  override def userName = _userName;
+  override def userName_(un : String) = _userName = un;
 
-  def nickName = _nickName;
-  def nickName_(nn : String) = _nickName = nn;
+  override def nickName = _nickName;
+  override def nickName_(nn : String) = _nickName = nn;
 
-  def userMode = _userMode;
-  def userMode_(um : String) = _userMode = um;
+  override def userMode = _userMode;
+  override def userMode_(um : String) = _userMode = um;
 
-  def realName = _realName;
-  def realName_(rn : String) = _realName = rn;
+  override def realName = _realName;
+  override def realName_(rn : String) = _realName = rn;
 }
