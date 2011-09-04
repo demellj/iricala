@@ -1,21 +1,26 @@
-import java.util.concurrent.SynchronousQueue
+import java.util.concurrent._;
 import java.io.PrintWriter
 import java.io.BufferedReader;
 import java.net._;
 import java.nio.channels._;
+import locks.ReentrantLock
 import scala.actors._;
 import scala.collection.mutable._;
 
-trait Core extends Responsive {
+trait Core extends Responsive with CollectiveResponsive {
     private var sockchan : SocketChannel = null;
     private var in : BufferedReader = null;
     private var out : PrintWriter = null;
 
-    private var sendqueue = new SynchronousQueue[String];
+    protected val workers : ExecutorService;
+
+    private val sendLock = new ReentrantLock;
+
+    private val sendqueue = new SynchronousQueue[String];
     
     private var listeners = new ListBuffer[Handler];
     
-    private def sendString(m : String) = {sendqueue put m}
+    private def sendString(m : String) : Unit = {sendqueue put m}
     
     private val sender = new Thread {
       override def run = while (true) {
@@ -35,12 +40,24 @@ trait Core extends Responsive {
 
     private val dispatcher = new Actor {
       def act = loop { receive {
-        case msg : Message => listeners foreach {_ onMessage msg}
+        case msg : Message => listeners foreach { x =>
+          workers.execute(new Runnable {
+            def run() = x onMessage msg;
+          })
+        }
         case _ => ()
       }}
     }
 
-    def send(cmd: String, args: List[String], trailing: Option[String]) = {
+    override def atomicSend(f : Responsive => Unit) : Unit = {
+      sendLock.lock(); try {
+        f(this);
+      } finally {
+        sendLock.unlock();
+      }
+    }
+
+    override def send(cmd: String, args: List[String], trailing: Option[String]) = {
       val argsToString =
         if (args != null && args.length > 0)
           " " + args.mkString("", " ", "")
@@ -51,7 +68,18 @@ trait Core extends Responsive {
           " :" + trailing.get
         else
           "";
-      sendString(cmd + argsToString + trailingToString )
+      sendLock.lock(); try {
+        sendString(cmd + argsToString + trailingToString)
+      } finally {
+        sendLock.unlock();
+      }
+    }
+
+    def +=(f : Message => Unit) = {
+      listeners += new Handler {
+        override def onMessage(msg : Message) = f(msg);
+      };
+      ()
     }
 
     def +=(h : Handler) : Unit = {
