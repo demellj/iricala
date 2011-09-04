@@ -1,13 +1,15 @@
 object Test {
     def main(s : Array[String]) = {
-      val client = new Client("foo", "foo", "0", "foo bar")
+      val client = new Client(8)
+
+      client nickName_ "nickName";
+      client userName_ "userName";
+      client realName_ "realName";
+      client userMode_ "t";
 
       client += new PingResponder with client.EnableHandler
-      client += new Authenticator with client.EnableHandler
 
-      client += new Handler {
-        override def onMessage(msg : Message) = Console println msg; ()
-      }
+      client += {msg : Message => Console println msg}
 
       client connect "localhost"
       
