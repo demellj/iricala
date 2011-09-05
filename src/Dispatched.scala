@@ -6,5 +6,6 @@ case class Message( from     : Option[Source]
                   , args     : List[String]
                   , trailing : Option[String] ) extends Dispatched
 
-/* Issued when the remote server closes the link */
+/* Issued when the remote server closes the link 
+ *   or when a local disconnect is requested */
 object LinkClosed extends Dispatched

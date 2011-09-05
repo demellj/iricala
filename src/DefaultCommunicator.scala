@@ -6,6 +6,7 @@ import java.io.PrintWriter
 import java.io.InputStreamReader
 import java.io.OutputStreamWriter
 import java.io.InterruptedIOException
+import java.nio.channels.ClosedByInterruptException
 
 trait DefaultCommunicator extends Communicable with Connectable with Dispatchable {
   private val sendLock = new ReentrantLock
@@ -76,7 +77,7 @@ trait DefaultCommunicator extends Communicable with Connectable with Dispatchabl
             else
               dispatcher ! LinkClosed
           } catch {
-            case iioe : InterruptedIOException => { running = false; }
+            case iioe : ClosedByInterruptException => { running = false; }
           }
         }
       }

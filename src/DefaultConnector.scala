@@ -4,7 +4,7 @@ import java.net.InetSocketAddress
 import java.nio.channels.Channels
 import java.nio.channels.SocketChannel
 
-trait DefaultConnector extends Connectable {
+trait DefaultConnector extends Connectable with Dispatchable {
   private var _sockchan : SocketChannel  = null;
   private var _inputStream : InputStream = null;
   private var _outputStream : OutputStream = null;
@@ -19,6 +19,11 @@ trait DefaultConnector extends Connectable {
 
     onConnected;
     ()
+  }
+
+  def disconnect = { 
+    dispatcher ! LinkClosed;
+    () 
   }
   
   override def isConnected = _sockchan != null && _sockchan.isConnected()
