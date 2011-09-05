@@ -1,8 +1,7 @@
 trait DefaultAuthenticator 
-    extends UserInfo 
+    extends Authenticatable
        with Dispatchable
        with Responsive
-       with Authenticatable
 { thisAuth =>
   private var needsAuth : Boolean = true;
 

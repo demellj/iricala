@@ -53,32 +53,32 @@ trait DefaultCommunicator extends Communicable with Connectable with Dispatchabl
       in  = new BufferedReader(new InputStreamReader(new InterruptibleInputStream(inputStream), "UTF-8"))
       out = new PrintWriter(new OutputStreamWriter(outputStream, "UTF-8"))
       _sender = new Thread {
-    	override def run = while (running) {
-    	  try {
-    	    val line = sendqueue take;
-      
-    	    if (line != null && line.length() > 0) {
-    		  out println (line + "\r\n");
-    		  out flush;
-    	    }
-    	  } catch {
-    	    case ie : InterruptedException => { running = false; }
-    	  }
-    	}
+        override def run = while (running) {
+          try {
+            val line = sendqueue take;
+        
+            if (line != null && line.length() > 0) {
+              out println (line + "\r\n");
+              out flush;
+            }
+          } catch {
+            case ie : InterruptedException => { running = false; }
+          }
+        }
       }
       _sender start;
       _receiver = new Thread {
-    	override def run = while (running) {
-    	  try {
-    	  val line = in readLine;
-    	  if (line != null && line.length() > 0)
-    		dispatcher ! MessageParser.parseString(line + "\r\n").get;
-    	  else
-    		dispatcher ! LinkClosed
-    	  } catch {
-    	    case iioe : InterruptedIOException => { running = false; }
-    	  }
-    	}
+        override def run = while (running) {
+          try {
+            val line = in readLine;
+            if (line != null && line.length() > 0)
+              dispatcher ! MessageParser.parseString(line + "\r\n").get;
+            else
+              dispatcher ! LinkClosed
+          } catch {
+            case iioe : InterruptedIOException => { running = false; }
+          }
+        }
       }
       _receiver start;
     }
