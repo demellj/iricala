@@ -6,9 +6,7 @@ trait Connectable {
     
   protected def outputStream : OutputStream
     
-  def isConnected : Boolean
-    
   protected def onConnected : Unit
     
-  protected def closeConnection : Unit
+  protected def shutdownConnector : Unit
 }

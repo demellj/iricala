@@ -16,8 +16,6 @@ trait DefaultDispatcher extends Dispatchable {
 	
   protected val numWorkers : Int;
     
-  override protected def listeners = _listeners
-
   override protected def shutdownDispatcher = {
     dispatcher ! CloseActor;
     _dispatcher = null;
@@ -29,8 +27,8 @@ trait DefaultDispatcher extends Dispatchable {
     workers = Executors.newFixedThreadPool(numWorkers);
     _dispatcher = new Actor {
       def act = loop { receive {
-        case msg : Message => listeners foreach { x => dispatch {x onMessage msg} }
-        case LinkClosed    => listeners foreach { x => dispatch {x onLinkClosed } }
+        case msg : Message => _listeners foreach { x => dispatch {x onMessage msg} }
+        case LinkClosed    => _listeners foreach { x => dispatch {x onLinkClosed } }
         case CloseActor    => exit;
         case _ => ()
       }}
@@ -47,6 +45,8 @@ trait DefaultDispatcher extends Dispatchable {
     _listeners -= h;
     ()
   }
+  
+  override def contains(h : Handler) = _listeners contains h;
     
   override protected def dispatcher = _dispatcher;
     

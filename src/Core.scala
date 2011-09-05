@@ -18,7 +18,7 @@ trait Core
       shutdownCommunicator;
       shutdownDispatcher;
       shutdownAuthenticator;
-      closeConnection;
+      shutdownConnector;
     }
   }
   

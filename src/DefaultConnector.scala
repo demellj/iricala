@@ -26,13 +26,13 @@ trait DefaultConnector extends Connectable with Dispatchable {
     () 
   }
   
-  override def isConnected = _sockchan != null && _sockchan.isConnected()
+  def isConnected = _sockchan != null && _sockchan.isConnected()
     
   override def inputStream = _inputStream
     
   override def outputStream = _outputStream
   
-  override protected def closeConnection = {
+  override protected def shutdownConnector = {
     if (_sockchan.isConnected()) {
       _sockchan.close()
     }

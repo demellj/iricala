@@ -2,8 +2,6 @@ import scala.collection.mutable.ListBuffer
 import scala.actors.Actor
 
 trait Dispatchable {
-  protected def listeners : Iterable[Handler]
-    
   protected def dispatcher : Actor
     
   def +=(f : Message => Unit) : Unit = {
@@ -15,6 +13,8 @@ trait Dispatchable {
   def +=(h : Handler) : Unit
 	
   def -=(h : Handler) : Unit
+  
+  def contains(h : Handler) : Boolean
 	
   protected def setupDispatcher : Unit
 	
