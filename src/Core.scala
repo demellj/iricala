@@ -6,10 +6,10 @@ import java.util.concurrent.locks.ReentrantLock
 import java.util.concurrent.SynchronousQueue
 
 trait Core 
-	extends Dispatchable
-	   with Connectable
-	   with Authenticatable
-	   with Communicable
+    extends Dispatchable
+       with Connectable
+       with Authenticatable
+       with Communicable
 { thisCore =>
   
   private val shutdownHandler : Handler = new Handler {
