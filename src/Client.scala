@@ -1,7 +1,7 @@
 class Client(private val numOfWorkers: Int) 
     extends Core 
        with DefaultDispatcher
-       with DefaultAuthenticator 
+       with DefaultIdentifier 
        with DefaultConnector 
        with DefaultCommunicator
 {

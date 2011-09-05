@@ -8,7 +8,7 @@ import java.util.concurrent.SynchronousQueue
 trait Core 
     extends Dispatchable
        with Connectable
-       with Authenticatable
+       with Identifiable
        with Communicable
 { thisCore =>
   
@@ -17,7 +17,7 @@ trait Core
       thisCore -= shutdownHandler;
       shutdownCommunicator;
       shutdownDispatcher;
-      shutdownAuthenticator;
+      shutdownIdentifier;
       shutdownConnector;
     }
   }
@@ -33,11 +33,11 @@ trait Core
     def atomicSend(f : Responsive => Unit) = thisCore.atomicSend(f)
   }
   
-  override def onAuthenticated = ()
+  override def onIdentified = ()
   
   override def onConnected = {
     if (inputStream != null && outputStream != null) {
-      setupAuthenticator;
+      setupIdentifier;
       setupCommunicator;
       setupDispatcher;
       thisCore += shutdownHandler;
