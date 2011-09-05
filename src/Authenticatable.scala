@@ -11,5 +11,9 @@ trait Authenticatable {
   def realName : String
   def realName_(rn : String) : Unit
   
-  def onAuthenticated : Unit
+  protected def setupAuthenticator : Unit
+  
+  protected def shutdownAuthenticator : Unit
+  
+  protected def onAuthenticated : Unit  
 }

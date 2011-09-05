@@ -12,6 +12,16 @@ trait Core
 	   with Communicable
 { thisCore =>
   
+  private val shutdownHandler : Handler = new Handler {
+    override def onLinkClosed = {
+      thisCore -= shutdownHandler;
+      shutdownCommunicator;
+      shutdownDispatcher;
+      shutdownAuthenticator;
+      closeConnection;
+    }
+  }
+  
   trait EnableHandler extends UserInfo with Responsive with CollectiveResponsive {
     def userMode = thisCore.userMode
     def realName = thisCore.realName
@@ -27,10 +37,10 @@ trait Core
   
   override def onConnected = {
     if (inputStream != null && outputStream != null) {
+      setupAuthenticator;
       setupCommunicator;
-      sender start;
-   	  dispatcher start;
-      receiver start;
+   	  setupDispatcher;
+   	  thisCore += shutdownHandler;
     }
   }
 }

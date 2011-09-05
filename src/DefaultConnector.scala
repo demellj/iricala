@@ -20,8 +20,19 @@ trait DefaultConnector extends Connectable {
     onConnected;
     ()
   }
+  
+  override def isConnected = _sockchan != null && _sockchan.isConnected()
     
   override def inputStream = _inputStream
     
   override def outputStream = _outputStream
+  
+  override protected def closeConnection = {
+    if (_sockchan.isConnected()) {
+      _sockchan.close()
+    }
+    _sockchan = null;
+    _inputStream = null;
+    _outputStream = null;
+  }
 }

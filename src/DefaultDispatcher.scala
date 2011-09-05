@@ -1,19 +1,41 @@
-import scala.collection.mutable.ListBuffer
-import scala.actors.Actor
 import java.util.concurrent.ExecutorService
+import java.util.concurrent.Executors
+import java.util.concurrent.RejectedExecutionException
+
+import scala.actors.Actor
+import scala.collection.mutable.ListBuffer
 
 trait DefaultDispatcher extends Dispatchable {
-    private var _listeners = new ListBuffer[Handler]
+    private object CloseActor;
     
-    override def listeners = _listeners
+    private val _listeners = new ListBuffer[Handler];
     
-    protected val workers : ExecutorService;
+    private var _dispatcher : Actor = null;
+    
+	private var workers : ExecutorService = null;
+	
+	protected val numWorkers : Int;
+    
+    override protected def listeners = _listeners
 
-    override def +=(f : Message => Unit) = {
-      _listeners += new Handler {
-        override def onMessage(msg : Message) = f(msg);
-      };
-      ()
+    override protected def shutdownDispatcher = {
+       dispatcher ! CloseActor;
+       _dispatcher = null;
+       workers.shutdown();
+       workers = null;
+    }
+
+    override protected def setupDispatcher = {
+       workers = Executors.newFixedThreadPool(numWorkers);
+       _dispatcher = new Actor {
+    	 def act = loop { receive {
+           case msg : Message => listeners foreach { x => dispatch {x onMessage msg} }
+           case LinkClosed    => listeners foreach { x => dispatch {x onLinkClosed } }
+           case CloseActor    => exit;
+           case _ => ()
+    	 }}
+       }
+       dispatcher start;
     }
 
     override def +=(h : Handler) : Unit = {
@@ -26,14 +48,14 @@ trait DefaultDispatcher extends Dispatchable {
       ()
     }
     
-    override protected val dispatcher = new Actor {
-      def act = loop { receive {
-        case msg : Message => listeners foreach { x =>
-          workers.execute(new Runnable {
-            def run() = x onMessage msg;
-          })
-        }
-        case _ => ()
-      }}
+    override protected def dispatcher = _dispatcher;
+    
+    private def dispatch(f : Unit) = {
+      try {
+        if (workers != null)
+          workers execute new Runnable { def run() = f }
+      } catch {
+        case ree : RejectedExecutionException => ()
+      }
     }
 }

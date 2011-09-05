@@ -2,9 +2,13 @@ import java.io._;
 import java.net._;
 
 trait Connectable {
-    def inputStream : InputStream
+    protected def inputStream  : InputStream
     
-    def outputStream : OutputStream
+    protected def outputStream : OutputStream
     
-    def onConnected : Unit
+    def isConnected : Boolean
+    
+    protected def onConnected : Unit
+    
+    protected def closeConnection : Unit
 }

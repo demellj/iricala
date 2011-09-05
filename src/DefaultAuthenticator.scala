@@ -38,4 +38,10 @@ trait DefaultAuthenticator
 
   override def realName = _realName;
   override def realName_(rn : String) = _realName = rn;
+  
+  override protected def setupAuthenticator = ()
+  
+  override protected def shutdownAuthenticator = {
+    needsAuth = true; ();
+  }
 }
