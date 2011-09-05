@@ -39,8 +39,8 @@ trait Core
     if (inputStream != null && outputStream != null) {
       setupAuthenticator;
       setupCommunicator;
-   	  setupDispatcher;
-   	  thisCore += shutdownHandler;
+      setupDispatcher;
+      thisCore += shutdownHandler;
     }
   }
 }
