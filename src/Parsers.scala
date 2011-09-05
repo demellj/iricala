@@ -159,7 +159,7 @@ object TargetParser extends BaseParser {
         case None        => Person(Some(n), None, None, None)
       }}
 
-      channel | targetmask | (nick_optqualuser ||| user_server ||| user_host)
+    channel | targetmask | (nick_optqualuser ||| user_server ||| user_host)
   }
 
   private def targetmask = failure("fail") ^^ {_ => Channel("a" ++ "foo", None) }

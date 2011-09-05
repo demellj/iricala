@@ -1,5 +1,5 @@
 trait Handler {
-	def onMessage(msg : Message) : Unit = ()
-	
-	def onLinkClosed : Unit = ()
+  def onMessage(msg : Message) : Unit = ()
+
+  def onLinkClosed : Unit = ()
 }

@@ -1,4 +1,3 @@
-
 trait UserInfo {
    def userName : String
 
